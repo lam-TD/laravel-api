@@ -20,4 +20,4 @@ use OpenApi\Attributes as OA;
 class OpenApiSpec
 {
     // This class is used only for OpenAPI annotations
-} 
+}

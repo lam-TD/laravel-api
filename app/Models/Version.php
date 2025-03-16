@@ -12,6 +12,7 @@ class Version extends Model
         'status',
         'importance',
         'product_id',
+        'order',
     ];
 
     public function product()

@@ -15,13 +15,19 @@ class VersionStoreData
     {
         $request->validated();
 
+        $productId = $request->input('product_id');
+
         $version = new Version;
+
+        $order = $version->newQuery()->where('product_id', $productId)->orderBy('order', 'desc')->first();
+        $order = isset($order['order']) ? $order['order'] + 1 : 1;
         $version->fill([
             'name' => $request->input('name'),
             'description' => $request->input('description'),
             'status' => $request->input('status', 0),
             'importance' => $request->input('importance', 0),
-            'product_id' => $request->input('product_id'),
+            'product_id' => $productId,
+            'order' => $order,
         ]);
 
         return new self($version, $request->file('files'));

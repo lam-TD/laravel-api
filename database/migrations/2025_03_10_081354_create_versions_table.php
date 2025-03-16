@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name', 255)->unique();
             $table->string('description', 255)->nullable();
+            $table->integer('order');
             $table->integer('status')->default(0);
             $table->integer('importance')->default(0);
             $table->foreignId('product_id')->constrained()->onDelete('cascade');

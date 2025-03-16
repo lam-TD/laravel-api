@@ -13,13 +13,12 @@ class VersionStoreAction
     {
         $version = $data->version;
         $files = $data->files;
+        $tempFiles = [];
 
         try {
             DB::beginTransaction();
 
             $version->saveOrFail();
-
-            $tempFiles = [];
 
             foreach ($files as $type => $file) {
                 $tempFiles[] = $file->storeAs("versions/{$version->id}", $file->hashName());

@@ -3,12 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Version;
-use App\Modules\Version\Store\VersionStoreAction;
-use App\Modules\Version\Store\VersionStoreData;
-use App\Modules\Version\Store\VersionStoreRequest;
-use App\Modules\Version\Update\VersionUpdateAction;
-use App\Modules\Version\Update\VersionUpdateData;
-use App\Modules\Version\Update\VersionUpdateRequest;
+use App\Modules\Version\Domain\DTOs\VersionData;
+use App\Modules\Version\Domain\Services\VersionService;
 use App\Modules\Version\VersionTransformer;
 use League\Fractal\TransformerAbstract;
 use Ltd\Supports\Http\Api\Response\ApiResponse;
@@ -26,16 +22,20 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'status', type: 'integer', enum: [0, 1]),
         new OA\Property(property: 'importance', type: 'integer', enum: [0, 1, 2, 3]),
         new OA\Property(property: 'product_id', type: 'integer'),
+        new OA\Property(property: 'order', type: 'integer'),
         new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
         new OA\Property(property: 'updated_at', type: 'string', format: 'date-time')
     ]
 )]
-
 class VersionController extends ResourceController
 {
-    protected array $allowedSorts = ['id', 'name', 'importance', 'status'];
-
+    protected array $allowedSorts = ['id', 'name', 'importance', 'status', 'order'];
     protected array $allowedIncludes = ['product', 'files'];
+
+    public function __construct(private readonly VersionService $versionService)
+    {
+        parent::__construct();
+    }
 
     public function model(): string
     {
@@ -44,7 +44,7 @@ class VersionController extends ResourceController
 
     protected function transformer(): TransformerAbstract
     {
-        return new VersionTransformer;
+        return new VersionTransformer();
     }
 
     #[OA\Get(
@@ -56,7 +56,7 @@ class VersionController extends ResourceController
     #[OA\Parameter(
         name: 'sort',
         in: 'query',
-        description: 'Sort field (id, name, importance, status)',
+        description: 'Sort field (id, name, importance, status, order)',
         required: false,
         schema: new OA\Schema(type: 'string')
     )]
@@ -81,7 +81,6 @@ class VersionController extends ResourceController
     {
         $this->request = $request;
         $resource = $this->resourceCollection()->toArray();
-
         return ApiResponse::ok(...$resource);
     }
 
@@ -98,13 +97,6 @@ class VersionController extends ResourceController
         required: true,
         schema: new OA\Schema(type: 'integer')
     )]
-    #[OA\Parameter(
-        name: 'include',
-        in: 'query',
-        description: 'Include related resources (product, files)',
-        required: false,
-        schema: new OA\Schema(type: 'string')
-    )]
     #[OA\Response(
         response: 200,
         description: 'Successful operation',
@@ -115,7 +107,6 @@ class VersionController extends ResourceController
     {
         $this->request = $request;
         $resource = $this->resourceItem($version->getKey())->toArray();
-
         return ApiResponse::ok(...$resource);
     }
 
@@ -128,17 +119,17 @@ class VersionController extends ResourceController
     #[OA\RequestBody(
         required: true,
         content: new OA\JsonContent(
-            required: ['name', 'product_id', 'files'],
+            required: ['name', 'product_id'],
             properties: [
                 new OA\Property(property: 'name', type: 'string'),
                 new OA\Property(property: 'description', type: 'string', nullable: true),
                 new OA\Property(property: 'status', type: 'integer', enum: [0, 1]),
                 new OA\Property(property: 'importance', type: 'integer', enum: [0, 1, 2, 3]),
                 new OA\Property(property: 'product_id', type: 'integer'),
+                new OA\Property(property: 'order', type: 'integer', nullable: true),
                 new OA\Property(
                     property: 'files',
                     type: 'object',
-                    required: ['update_patch', 'release_note'],
                     properties: [
                         new OA\Property(property: 'update_patch', type: 'string', format: 'binary'),
                         new OA\Property(property: 'release_note', type: 'string', format: 'binary')
@@ -149,12 +140,14 @@ class VersionController extends ResourceController
     )]
     #[OA\Response(response: 201, description: 'Version created successfully')]
     #[OA\Response(response: 422, description: 'Validation error')]
-    public function store(VersionStoreRequest $request)
+    public function store(ResourceItemRequest $request)
     {
-        $action = new VersionStoreAction;
-        $action->execute(VersionStoreData::fromRequest($request));
-
-        return ApiResponse::created();
+        $versionData = VersionData::fromRequest($request);
+        $version = $this->versionService->createVersion($versionData);
+        
+        $this->request = $request;
+        $resource = $this->resourceItem($version->getKey())->toArray();
+        return ApiResponse::created(...$resource);
     }
 
     #[OA\Put(
@@ -179,6 +172,7 @@ class VersionController extends ResourceController
                 new OA\Property(property: 'status', type: 'integer', enum: [0, 1]),
                 new OA\Property(property: 'importance', type: 'integer', enum: [0, 1, 2, 3]),
                 new OA\Property(property: 'product_id', type: 'integer'),
+                new OA\Property(property: 'order', type: 'integer', nullable: true),
                 new OA\Property(
                     property: 'files',
                     type: 'object',
@@ -193,11 +187,34 @@ class VersionController extends ResourceController
     #[OA\Response(response: 200, description: 'Version updated successfully')]
     #[OA\Response(response: 404, description: 'Version not found')]
     #[OA\Response(response: 422, description: 'Validation error')]
-    public function update(VersionUpdateRequest $request, Version $version)
+    public function update(ResourceItemRequest $request, Version $version)
     {
-        $action = new VersionUpdateAction;
-        $action->execute(VersionUpdateData::fromRequest($request));
+        $versionData = VersionData::fromRequest($request);
+        $version = $this->versionService->updateVersion($version, $versionData);
+        
+        $this->request = $request;
+        $resource = $this->resourceItem($version->getKey())->toArray();
+        return ApiResponse::ok(...$resource);
+    }
 
+    #[OA\Delete(
+        path: '/api/versions/{version}',
+        summary: 'Delete a version',
+        description: 'Delete a version and its associated files',
+        tags: ['Versions']
+    )]
+    #[OA\Parameter(
+        name: 'version',
+        in: 'path',
+        description: 'Version ID',
+        required: true,
+        schema: new OA\Schema(type: 'integer')
+    )]
+    #[OA\Response(response: 200, description: 'Version deleted successfully')]
+    #[OA\Response(response: 404, description: 'Version not found')]
+    public function destroy(Version $version)
+    {
+        $this->versionService->deleteVersion($version);
         return ApiResponse::ok();
     }
 }

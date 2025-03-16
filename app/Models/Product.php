@@ -18,4 +18,9 @@ class Product extends Model
     {
         return $this->hasMany(Version::class);
     }
+
+    public static function factory()
+    {
+        return new self;
+    }
 }
