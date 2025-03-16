@@ -20,7 +20,7 @@ class File extends Model
         'encrypt_key',
         'encrypt_iv',
     ];
-    
+
     public function version()
     {
         return $this->morphTo();

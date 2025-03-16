@@ -17,5 +17,3 @@ it('can decrypt a file', function () {
     $encrypter = FileEncrypter::encryptFile($file);
     $encryptedFile = $encrypter->toFile();
 });
-
-

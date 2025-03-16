@@ -1,11 +1,9 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\FileController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\VersionController;
-use App\Http\Controllers\FileController;
-
+use Illuminate\Support\Facades\Route;
 
 Route::apiResource('/products', ProductController::class);
 Route::post('/versions/{version}', [VersionController::class, 'update']);

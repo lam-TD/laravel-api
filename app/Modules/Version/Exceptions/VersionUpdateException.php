@@ -15,4 +15,4 @@ class VersionUpdateException extends Exception
             'message' => $this->getMessage(),
         ], Response::HTTP_UNPROCESSABLE_ENTITY);
     }
-} 
+}

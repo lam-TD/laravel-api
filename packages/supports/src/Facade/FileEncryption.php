@@ -11,9 +11,10 @@ use Illuminate\Support\Facades\Facade;
  * @method static string toString()
  * @method static bool toFile(string $file)
  */
-class FileEncryption extends Facade {
-    protected static function getFacadeAccessor() {
+class FileEncryption extends Facade
+{
+    protected static function getFacadeAccessor()
+    {
         return 'FileEncryption';
     }
 }
-

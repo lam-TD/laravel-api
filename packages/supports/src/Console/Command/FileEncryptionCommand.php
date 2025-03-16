@@ -17,8 +17,5 @@ class FileEncryptionCommand extends Command
             'recursive' => $this->option('recursive'),
         ];
 
-        
-        
     }
-    
 }

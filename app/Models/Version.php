@@ -13,7 +13,7 @@ class Version extends Model
         'importance',
         'product_id',
     ];
-    
+
     public function product()
     {
         return $this->belongsTo(Product::class);

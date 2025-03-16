@@ -6,13 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Ltd\Supports\Traits\HasFractal;
 use Ltd\Supports\Traits\HasQueryBuilder;
-use App\Http\Controllers\Finance\Transformer\PersonalSpedingActitityTransformer;
 
 abstract class ResourceController
 {
     use HasFractal;
     use HasQueryBuilder;
+
     protected bool $usePagination = true;
+
     protected Request $request;
 
     abstract public function model(): string|Model;
@@ -21,6 +22,7 @@ abstract class ResourceController
     {
         $builder = $this->newQueryBuilder($this->model(), $this->request);
         $fractal = $this->collection($builder->paginate(), $this->transformer());
+
         return $fractal;
     }
 
@@ -28,6 +30,7 @@ abstract class ResourceController
     {
         $builder = $this->newQueryBuilder($this->model(), $this->request);
         $fractal = $this->item($builder->find($id), $this->transformer());
+
         return $fractal;
     }
 

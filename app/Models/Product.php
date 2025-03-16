@@ -13,7 +13,7 @@ class Product extends Model
         'logo_color',
         'description',
     ];
-    
+
     public function versions()
     {
         return $this->hasMany(Version::class);

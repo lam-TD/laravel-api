@@ -1,0 +1,193 @@
+openapi: 3.0.0
+info:
+  title: 'Laravel API Documentation'
+  description: 'API documentation for Laravel API'
+  version: 1.0.0
+paths:
+  /api:
+    servers:
+      -
+        url: 'http://localhost'
+        description: 'Local Server'
+  /api/versions:
+    get:
+      tags:
+        - Versions
+      summary: 'List all versions'
+      description: 'Get a list of all versions with optional filtering and sorting'
+      operationId: 45fd77a87e1e2ec1a12fa43393c8bce8
+      parameters:
+        -
+          name: sort
+          in: query
+          description: 'Sort field (id, name, importance, status)'
+          required: false
+          schema:
+            type: string
+        -
+          name: include
+          in: query
+          description: 'Include related resources (product, files)'
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'Successful operation'
+          content:
+            application/json:
+              schema:
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Version' } }
+                  meta: { type: object }
+                type: object
+    post:
+      tags:
+        - Versions
+      summary: 'Create a new version'
+      description: 'Create a new version with files'
+      operationId: ad4f43bad9a30a96ec665577b1f49a37
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - name
+                - product_id
+                - files
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                  nullable: true
+                status:
+                  type: integer
+                  enum: [0, 1]
+                importance:
+                  type: integer
+                  enum: [0, 1, 2, 3]
+                product_id:
+                  type: integer
+                files:
+                  required: [update_patch, release_note]
+                  properties: { update_patch: { type: string, format: binary }, release_note: { type: string, format: binary } }
+                  type: object
+              type: object
+      responses:
+        '201':
+          description: 'Version created successfully'
+        '422':
+          description: 'Validation error'
+  '/api/versions/{version}':
+    get:
+      tags:
+        - Versions
+      summary: 'Get a specific version'
+      description: 'Get detailed information about a specific version'
+      operationId: 18164b6c4a7342a366cd3a9eba935363
+      parameters:
+        -
+          name: version
+          in: path
+          description: 'Version ID'
+          required: true
+          schema:
+            type: integer
+        -
+          name: include
+          in: query
+          description: 'Include related resources (product, files)'
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'Successful operation'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
+        '404':
+          description: 'Version not found'
+    put:
+      tags:
+        - Versions
+      summary: 'Update a version'
+      description: 'Update an existing version and its files'
+      operationId: 9785a112262afa9239a3326565ac3b2c
+      parameters:
+        -
+          name: version
+          in: path
+          description: 'Version ID'
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                  nullable: true
+                status:
+                  type: integer
+                  enum: [0, 1]
+                importance:
+                  type: integer
+                  enum: [0, 1, 2, 3]
+                product_id:
+                  type: integer
+                files:
+                  properties: { update_patch: { type: string, format: binary }, release_note: { type: string, format: binary } }
+                  type: object
+              type: object
+      responses:
+        '200':
+          description: 'Version updated successfully'
+        '404':
+          description: 'Version not found'
+        '422':
+          description: 'Validation error'
+components:
+  schemas:
+    Version:
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          enum:
+            - 0
+            - 1
+        importance:
+          type: integer
+          enum:
+            - 0
+            - 1
+            - 2
+            - 3
+        product_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      type: object
+tags:
+  -
+    name: Versions
+    description: Versions
